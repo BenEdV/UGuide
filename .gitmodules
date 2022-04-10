@@ -1,6 +1,6 @@
-[submodule "UGuide_frontend"]
-	path = learnlytics-frontend
-	url = git@github.com:BenEdV/UGuide_frontend.git
-[submodule "UGuide_backend"]
+[submodule "learnlytics-backend"]
 	path = learnlytics-backend
 	url = git@github.com:BenEdV/UGuide_backend.git
+[submodule "learnlytics-frontend"]
+	path = learnlytics-frontend
+	url = git@github.com:BenEdV/UGuide_frontend.git
