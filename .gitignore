@@ -1,0 +1,9 @@
+production.env
+postgresdb_production\.env
+data
+ssl
+.env
+docker-compose.override.yml
+.DS_Store
+.idea/
+env/

@@ -1,0 +1,5 @@
+version: '3.2'
+services:
+    backend:
+        volumes:
+        - ./learnlytics-backend/:/var/uwsgi/

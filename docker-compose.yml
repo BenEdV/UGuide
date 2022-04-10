@@ -1,0 +1,204 @@
+version: '3.2'
+services:
+    # Learning Locker
+    mongo:
+        image: mongo:3.4
+        restart: unless-stopped
+        volumes:
+            - "${DATA_LOCATION}/mongo:/data/db"
+        networks:
+            - learninglocker
+            - learnlytics-backend
+
+    learninglocker_redis:
+        image: redis:4-alpine
+        restart: unless-stopped
+        networks:
+            - learninglocker
+
+    learninglocker_xapi:
+        image: learninglocker/xapi-service:2.1.10
+        restart: unless-stopped
+        environment:
+            - MONGO_URL
+            - MONGO_DB
+            - REDIS_URL=redis://learninglocker_redis:6379/0
+        command: bash -c "node mongo_busywait && yarn start"
+        volumes:
+            - "${DATA_LOCATION}/xapi-storage:/usr/src/app/storage"
+            - ./mongo_busywait.js:/usr/src/app/mongo_busywait.js
+        networks:
+            - learninglocker
+            - public
+            - learnlytics-backend
+
+    learninglocker_api:
+        image: michzimny/learninglocker2-app:${LL_TAG}
+        environment:
+            - MONGO_URL
+            - APP_SECRET=${LEARNING_LOCKER_APP_SECRET}
+        command: bash -c "node mongo_busywait && node api/dist/server"
+        restart: unless-stopped
+        volumes:
+            - "./data/app-storage:/opt/learninglocker/storage"
+            - ./mongo_busywait.js:/opt/learninglocker/mongo_busywait.js
+        networks:
+            - learninglocker
+            - public
+            - learnlytics-backend
+
+    learninglocker_worker:
+        image: michzimny/learninglocker2-app:${LL_TAG}
+        environment:
+            - APP_SECRET=${LEARNING_LOCKER_APP_SECRET}
+            - REDIS_HOST=learninglocker_redis
+        command: "node worker/dist/server"
+        restart: unless-stopped
+        volumes:
+            - "${DATA_LOCATION}/app-storage:/opt/learninglocker/storage"
+        networks:
+            - learninglocker
+    # StudyLens
+    postgresdb:
+        restart: unless-stopped
+        image: postgres:9
+        volumes:
+        - ${DATA_LOCATION}/postgresdb:/var/lib/postgresql/data
+        environment:
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+        - POSTGRES_DB
+        networks:
+        - learnlytics-backend
+
+    backend_redis:
+        restart: unless-stopped
+        image: redis
+        networks:
+        - learnlytics-backend
+
+    backend:
+        restart: unless-stopped
+        build:
+            context: ./learnlytics-backend
+        image: learnlytics-backend:latest
+        volumes:
+        - ${DATA_LOCATION}/backend_files:/var/uwsgi/${UPLOAD_FOLDER}
+        environment:
+        - LEARNLYTICS_CONFIG=Production
+        - IN_DOCKER_CONTAINER=True
+        - DOMAIN_NAME
+        - XAPI_PUBLIC_POSTFIX
+        - API_PUBLIC_POSTFIX
+        - PUBLIC_PORT_HTTPS
+        - UPLOAD_FOLDER
+        - MAX_CONTENT_LENGTH
+        - MONGO_URL
+        - MONGO_DB
+        - POSTGRES_DIALECT
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+        - POSTGRES_DB
+        - POSTGRES_HOST
+        - POSTGRES_PORT
+        - BACKEND_CONFIG
+        - CAPTCHA_SECRET
+        - JWT_LOGIN_SECRET
+        - JWT_ACCESS_TOKEN_EXPIRATION_IN_MINUTES
+        - JWT_REFRESH_TOKEN_EXPIRATION_IN_MINUTES
+        - SAML_PROVIDER
+        - SAML_AUTH_URL
+        - SAML_CLIENT_ID
+        - SAML_CLIENT_SECRET
+        - SAML_REDIRECT_URI
+        - USE_SSL=${USE_BACKEND_SSL}
+        - LOG_DB_QUERIES
+        - FLASK_DEBUG
+        - FLASK_ENV
+        - CELERY_BROKER_URL
+        - CELERY_RESULT_BACKEND
+        - TIMEZONE=${TZ}
+        - TZ
+        networks:
+        - learnlytics-backend
+        - learnlytics-frontend
+        - public
+
+    frontend:
+        restart: "no"
+        build:
+            context: ./learnlytics-frontend
+            args:
+            - DOMAIN_NAME
+            - API_PUBLIC_POSTFIX
+            - PUBLIC_PORT_HTTPS
+            - ALLOW_REGISTRATION
+            - HIDE_SIDENAV
+            - HIDE_BREADCRUMBS
+            - COLLECTION_HOMEPAGE
+            - DASHBOARD_HOMEPAGE
+            - USER_AGREEMENT_I18N_KEY
+            - CAPTCHA_SITE_KEY
+            - PRODUCT_NAME
+            - PROJECT_NAME
+            - SHOW_POWERED_BY
+            - SHOW_PROJECT_NAME
+            - SAML_CLIENT_ID
+            - SAML_AUTH_URL
+            - SAML_LOGOUT_URL
+        image: learnlytics-frontend:latest
+        volumes:
+        - frontend-files:/app/dist
+        - ./env/assets:/app/src/assets/env
+        networks:
+        - learnlytics-frontend
+        - public
+
+    nginx:
+        restart: always
+        image: nginx:latest
+        volumes:
+        - ./nginx.conf.template:/etc/nginx/conf.d/default.conf.template
+        - ./nginx_setup.sh:/nginx_setup.sh
+        - frontend-files:/static/frontend:ro
+        command: ./nginx_setup.sh
+        environment:
+        - DOMAIN_NAME
+        - XAPI_PUBLIC_POSTFIX
+        - LLAPI_PUBLIC_POSTFIX
+        - API_PUBLIC_POSTFIX
+        - BLOCK_LL_API
+        - TZ
+        - FLASK_ENV
+        ports:
+        - '${PUBLIC_PORT_HTTP}:80'
+        - '${PUBLIC_PORT_HTTPS}:443'
+        - '3000:3000'
+        networks:
+        - public
+        secrets:
+        - app.cert
+        - app.key
+
+volumes:
+    frontend-files:
+
+networks:
+    # Learninglocker
+    learninglocker:
+        driver: bridge
+    # services used by the backend
+    learnlytics-backend:
+        driver: bridge
+    # frontend should not have direct access to the databases
+    learnlytics-frontend:
+        driver: bridge
+    # containers attached to nginx for public access
+    public:
+        driver: bridge
+
+secrets:
+    app.cert:
+        file: ${SSL_LOCATION}/server.crt
+    app.key:
+        file: ${SSL_LOCATION}/server.key

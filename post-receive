@@ -1,0 +1,37 @@
+#!/bin/sh
+# Script used to update and redeploy the codebase when pushed to the server
+
+# Settings
+work_dir=/root/LearnLytics
+git_dir=/srv/git/LearnLytics
+
+# Check out repos to working directories
+if git --work-tree=$work_dir --git-dir=$git_dir/LearnLytics.git checkout -f ; then
+	echo "git checked out to working directory"
+else
+	echo "Error with checkout"
+	exit 1
+fi
+
+if git --work-tree=$work_dir/learnlytics-backend --git-dir=$git_dir/LearnLytics_backend.git checkout -f; then
+	echo "Backend checked out to working directory"
+else
+	echo "Error backend could not be checked out properly"
+	exit 1
+fi
+
+if git --work-tree=$work_dir/learnlytics-frontend --git-dir=$git_dir/LearnLytics_frontend.git checkout -f; then
+	echo "Frontend checked out to working directory"
+else
+	echo "Error frontend could not be checked out properly"
+	exit 1
+fi
+
+cd $work_dir || { echo "Could not change to working directory"; exit 1; }
+
+# Build and restart docker containers
+docker-compose build
+docker-compose up -d
+
+# Clean old docker images
+docker rmi $(docker images | grep "^<none>" | awk "{print $3}")
