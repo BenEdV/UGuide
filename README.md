@@ -10,18 +10,14 @@ The LearnLytics repo is structured in [Git Submodules](https://git-scm.com/book/
 
 # Docker Compose
 
-LearnLytics uses [Docker Compose](https://docs.docker.com/compose/) as it deployment system. This uses containerized services that run in a virtual environment ensuring that the system runs identically on varying development and production hardware. To run the service outside of a container follow the READMEs in the respective [backend](learnlytics-backend) and [frontend](learnlytics-frontend) repositories.
+LearnLytics uses [Docker Compose](https://docs.docker.com/compose/) as it deployment system. This uses containerized services that run in a virtual environment ensuring that the system runs identically on varying development and production hardware. To run the service outside of a container follow the READMEs in the respective [backend](https://github.com/BenEdV/UGuide_backend) and [frontend](https://github.com/BenEdV/UGuide_frontend) repositories.
 
 # Deployment
-The following commands will create containers for each service in the stack with the necessary networks and volumes to connect the services and persist the databases. The containers for the mongo database is relied on by the other containers and must be started first as other containers which depend on them will fail if the databases is not present. The backend has a busy wait for the postgres database and thus can be started simultaneously. Due to this one must first run
-```sh
-docker-compose up -d mongo
-```
-And then after waiting for the database to start in about half a minute run
+The following command will create containers for each service in the stack with the necessary networks and volumes to connect the services and persist the databases.
 ```sh
 docker-compose up -d
 ```
-to start the remaining containers. The services are taken down with the following command
+The services are taken down with the following command
 ```sh
 docker-compose down
 ```
