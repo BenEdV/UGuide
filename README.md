@@ -4,7 +4,7 @@ This is the repository for the LearnLytics project, which consists of two parts.
 
 # Installation
 ```sh
-git clone git@gitlab.com:LearnLyticsUU/LearnLytics.git --recurse-submodules
+git clone git@github.com:BenEdV/UGuide.git --recurse-submodules
 ```
 The LearnLytics repo is structured in [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules). This command will clone the entire LearnLytics codebase including the Backend, and Frontend submodule repositories.
 
