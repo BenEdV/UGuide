@@ -146,6 +146,7 @@ services:
             - SAML_CLIENT_ID
             - SAML_AUTH_URL
             - SAML_LOGOUT_URL
+            - HOVER_LOG_TIMEOUT
         image: learnlytics-frontend:latest
         volumes:
         - frontend-files:/app/dist
