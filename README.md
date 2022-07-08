@@ -1,53 +1,23 @@
-# LearnLytics
+# UGuide
 
-This is the repository for the LearnLytics project, which consists of two parts. A Backend for aggregating statistics and parsing data from other sources, and a Frontend with dashboards showing the statistics giving students and teachers insight in their learning progress.
+This is the repository for the UGuide project. UGuide uses [Docker](https://www.docker.com) to run multiple containers of the different services.
+
+- [nginx](https://nginx.org) Serves the frontend web application and backend/learninglocker APIs through a single endpoint
+- [backend](https://github.com/BenEdV/UGuide_backend) aggregates statistics and parsing data from other sources
+- [frontend](https://github.com/BenEdV/UGuide_frontend) dashboards showing the statistics giving students and teachers insight in their learning progress
+- [postgres](https://www.postgresql.org) the database for the backend, contains data for users, permissions, activity content, constructs, etc.
+- [learninglocker](https://docs.learninglocker.net/welcome/) an open source LRS which we use for receiving and storing [xAPI statements](https://xapi.com/statements/)
+- [mongo](https://www.mongodb.com) the database learninglocker uses to store statements. It is also accessed directly by the backend to allow faster and more complex queries
 
 # Installation
+## Git clone
 ```sh
 git clone git@github.com:BenEdV/UGuide.git --recurse-submodules
 ```
-The LearnLytics repo is structured in [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules). This command will clone the entire LearnLytics codebase including the Backend, and Frontend submodule repositories.
+The UGuide repo is structured in [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules). This command will clone the entire UGuide codebase including the Backend, and Frontend submodule repositories.
 
-# Docker Compose
+## Set up development environment
+See [Setting up development environment](https://github.com/BenEdV/UGuide/wiki/Setting-up-development-environment) for a guide on setting up UGuide for development purposes.
 
-LearnLytics uses [Docker Compose](https://docs.docker.com/compose/) as it deployment system. This uses containerized services that run in a virtual environment ensuring that the system runs identically on varying development and production hardware. To run the service outside of a container follow the READMEs in the respective [backend](https://github.com/BenEdV/UGuide_backend) and [frontend](https://github.com/BenEdV/UGuide_frontend) repositories.
-
-# Deployment
-The following command will create containers for each service in the stack with the necessary networks and volumes to connect the services and persist the databases.
-```sh
-docker-compose up -d
-```
-The services are taken down with the following command
-```sh
-docker-compose down
-```
-
-## Browser access
-The website is available at `https://localhost/login` on your develop machine. You can also setup a port for the unencrypted http access, this will redirect to the secure https URL.
-
-## Rebuild
-If the codebase has changed `docker-compose up -d` will still run with the latest build of the codebase. To make a new build with the new codebase run
-```sh
-docker-compose build
-```
-
-# Learning Locker
-We use the [learning locker docker image](https://github.com/michzimny/learninglocker2-docker) created by [michzimny](https://github.com/michzimny). This is a docker image available at [dockerhub](https://hub.docker.com/r/michzimny/learninglocker2-app). Take the tag for the latest version and set `LL_TAG` in your `.env` file to this value. By the first set up you will need to initialize the learninglocker admin by running
-```sh
-docker-compose exec learninglocker_api node cli/dist/server createSiteAdmin [email] [organisation] [password]
-```
-
-### Updating production or testing server
-First you will need to have your public ssh key added to the authorized keys of the server by another already authorized team member. Add a remote for our server with:
-```
-git remote add server root@learninganalytics.science.uu.nl:/srv/git/LearnLytics/LearnLytics_deployment.git
-git remote add test root@intelearn.science.uu.nl:/srv/git/LearnLytics/LearnLytics.git
-```
-And then push to the server to have it automatically update with the new push with
-```
-git push server
-git push test
-```
-
-### Setting up new server
-The [post-receive](post-receive) file should be found in the `.git/hooks` folder of the deployment repo.
+## Common issues
+The [Common Issues](https://github.com/BenEdV/UGuide/wiki/Common-Issues) wiki page contains a list of issues developers may face while developing for UGuide.
